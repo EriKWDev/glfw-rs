@@ -14,17 +14,10 @@
 // limitations under the License.
 
 extern crate glfw;
-#[cfg(feature = "raw-window-handle-v0-6")]
 extern crate raw_window_handle_0_6 as raw_window_handle;
 
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-extern crate raw_window_handle_0_5 as raw_window_handle;
-
 use glfw::{Action, Context, Key};
-#[cfg(feature = "raw-window-handle-v0-6")]
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-use raw_window_handle::{HasRawWindowHandle, RawWindowHandle};
 
 fn main() {
     let mut glfw = glfw::init_no_callbacks().unwrap();
@@ -35,10 +28,7 @@ fn main() {
 
     window.set_key_polling(true);
     window.make_current();
-    #[cfg(feature = "raw-window-handle-v0-6")]
     let raw = window.window_handle().unwrap().as_raw();
-    #[cfg(not(feature = "raw-window-handle-v0-6"))]
-    let raw = window.raw_window_handle();
 
     match raw {
         RawWindowHandle::Win32(handle) => println!("raw handle: {:?}", handle),

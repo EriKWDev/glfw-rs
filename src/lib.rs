@@ -18,15 +18,15 @@
 #![crate_type = "dylib"]
 #![crate_name = "glfw"]
 #![deny(
-rust_2018_compatibility,
-rust_2018_idioms,
-nonstandard_style,
-unused,
-future_incompatible,
-missing_copy_implementations,
-missing_debug_implementations,
-missing_abi,
-clippy::doc_markdown
+    rust_2018_compatibility,
+    rust_2018_idioms,
+    nonstandard_style,
+    unused,
+    future_incompatible,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    missing_abi,
+    clippy::doc_markdown
 )]
 #![allow(non_upper_case_globals)]
 
@@ -230,46 +230,40 @@ extern crate bitflags;
 #[cfg(feature = "image")]
 extern crate image;
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 extern crate raw_window_handle_0_6 as raw_window_handle;
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-extern crate raw_window_handle_0_5 as raw_window_handle;
 
 use std::collections::VecDeque;
 
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-use raw_window_handle::{HasRawWindowHandle, HasRawDisplayHandle};
-
-#[cfg(feature = "raw-window-handle-v0-6")]
-use raw_window_handle::{HasDisplayHandle, HasWindowHandle, WindowHandle, HandleError, DisplayHandle};
-use raw_window_handle::{RawWindowHandle, RawDisplayHandle};
+use raw_window_handle::{
+    DisplayHandle, HandleError, HasDisplayHandle, HasWindowHandle, WindowHandle,
+};
+use raw_window_handle::{RawDisplayHandle, RawWindowHandle};
 
 use std::error;
+#[allow(unused)]
+use std::ffi::*;
 use std::ffi::{CStr, CString};
 use std::fmt;
 use std::marker::Send;
 use std::mem;
+use std::ops::{Deref, DerefMut};
 #[cfg(feature = "vulkan")]
 use std::os::raw::c_uint;
-use std::os::raw::{c_char, c_double, c_float, c_int};
-use std::os::raw::{c_uchar, c_ushort};
 #[cfg(not(target_os = "emscripten"))]
 use std::os::raw::c_void;
+use std::os::raw::{c_char, c_double, c_float, c_int};
+use std::os::raw::{c_uchar, c_ushort};
 use std::path::PathBuf;
 use std::ptr;
 use std::ptr::{null, null_mut};
 use std::slice;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
-#[allow(unused)]
-use std::ffi::*;
-use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, Mutex};
 
+use crate::ffi::GLFWwindow;
 #[cfg(feature = "vulkan")]
 use ash::vk;
-use crate::ffi::GLFWwindow;
 
 /// Alias to `MouseButton1`, supplied for improved clarity.
 pub use self::MouseButton::Button1 as MouseButtonLeft;
@@ -309,14 +303,12 @@ unsafe impl Send for PWindow {}
 unsafe impl Sync for PWindow {}
 
 // these are technically already implemented, but somehow this fixed a error in wgpu
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasWindowHandle for PWindow {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         self.0.window_handle()
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasDisplayHandle for PWindow {
     fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
         self.0.display_handle()
@@ -485,8 +477,8 @@ pub fn get_key_name(key: Option<Key>, scancode: Option<Scancode>) -> Option<Stri
 
 /// Wrapper around `glfwGetKeyName`
 #[deprecated(
-since = "0.16.0",
-note = "'key_name' can cause a segfault, use 'get_key_name' instead"
+    since = "0.16.0",
+    note = "'key_name' can cause a segfault, use 'get_key_name' instead"
 )]
 pub fn key_name(key: Option<Key>, scancode: Option<Scancode>) -> String {
     unsafe {
@@ -516,8 +508,8 @@ pub fn get_key_scancode(key: Option<Key>) -> Option<Scancode> {
 impl Key {
     /// Wrapper around `glfwGetKeyName` without scancode
     #[deprecated(
-    since = "0.16.0",
-    note = "Key method 'name' can cause a segfault, use 'get_name' instead"
+        since = "0.16.0",
+        note = "Key method 'name' can cause a segfault, use 'get_name' instead"
     )]
     pub fn name(&self) -> String {
         #[allow(deprecated)]
@@ -637,7 +629,7 @@ macro_rules! fail_on_errors {
         |error, description| {
             fail_on_errors(error, description);
         }
-    }}
+    }};
 }
 
 #[cfg(feature = "log")]
@@ -660,7 +652,7 @@ macro_rules! log_errors {
         |error, description| {
             log_errors(error, description);
         }
-    }}
+    }};
 }
 
 /// When not using the `image` library, or if you just want to,
@@ -853,16 +845,13 @@ static REF_COUNT_FOR_GLFW: AtomicUsize = AtomicUsize::new(0);
 /// A struct that represents a thread safe handle to a `Glfw`
 #[derive(Debug)]
 pub struct ThreadSafeGlfw {
-    glfw: Glfw
+    glfw: Glfw,
 }
 
 impl ThreadSafeGlfw {
-
     /// Creates a new `Glfw` wrapper that can be shared between threads
     pub fn from(glfw: &mut Glfw) -> Self {
-        Self {
-            glfw: glfw.clone()
-        }
+        Self { glfw: glfw.clone() }
     }
 
     /// Wrapper function, please refer to [`Glfw::set_swap_interval`]
@@ -911,7 +900,8 @@ impl ThreadSafeGlfw {
         device: vk::PhysicalDevice,
         queue_family: u32,
     ) -> bool {
-        self.glfw.get_physical_device_presentation_support_raw(instance, device, queue_family)
+        self.glfw
+            .get_physical_device_presentation_support_raw(instance, device, queue_family)
     }
 
     /// Wrapper function, please refer to [`Glfw::get_timer_value`]
@@ -928,7 +918,6 @@ impl ThreadSafeGlfw {
     pub fn post_empty_event(&self) {
         self.glfw.post_empty_event()
     }
-
 }
 
 unsafe impl Send for ThreadSafeGlfw {}
@@ -1046,9 +1035,9 @@ pub fn init_hint(hint: InitHint) {
 /// - Subsequent calls to `init` will return `Glfw` token immediately.
 /// - If an initialization error occurred within the GLFW library
 ///   `Err(InternalInitError)` will be returned.
-pub fn init<T>(callback: T)
-    -> Result<Glfw, InitError>
-    where T: FnMut(Error, String) + 'static
+pub fn init<T>(callback: T) -> Result<Glfw, InitError>
+where
+    T: FnMut(Error, String) + 'static,
 {
     // Initialize the error callback. This is done
     // before `ffi::glfwInit` because errors could occur during
@@ -1058,14 +1047,15 @@ pub fn init<T>(callback: T)
     init_no_callbacks()
 }
 
-pub fn init_no_callbacks() -> Result<Glfw, InitError>
-{
+pub fn init_no_callbacks() -> Result<Glfw, InitError> {
     // initialize GLFW.
     // FYI: multiple not terminated ffi::glfwInit() returns ffi::TRUE immediately.
     // https://www.glfw.org/docs/latest/group__init.html#ga317aac130a235ab08c6db0834907d85e
     if unsafe { ffi::glfwInit() } == ffi::TRUE {
         REF_COUNT_FOR_GLFW.fetch_add(1, Ordering::SeqCst);
-        Ok(Glfw {phantom: std::marker::PhantomData})
+        Ok(Glfw {
+            phantom: std::marker::PhantomData,
+        })
     } else {
         Err(InitError::Internal)
     }
@@ -1095,56 +1085,41 @@ impl Glfw {
     /// // triggers a task failure when a GLFW error is encountered.
     /// glfw.set_error_callback(fail_on_errors!());
     /// ~~~
-    pub fn set_error_callback<T>(
-        &mut self,
-        callback: T,
-    )
-    where T: FnMut(Error, String) + 'static
+    pub fn set_error_callback<T>(&mut self, callback: T)
+    where
+        T: FnMut(Error, String) + 'static,
     {
         callbacks::error::set(callback);
     }
 
     /// Unsets the monitor callback
-    pub fn unset_error_callback(
-        &mut self,
-    )
-    {
+    pub fn unset_error_callback(&mut self) {
         callbacks::error::unset();
     }
 
     /// Sets the monitor callback, overwriting the previous one stored.
-    pub fn set_monitor_callback<T>(
-        &mut self,
-        callback: T
-    )
-    where T: FnMut(Monitor, MonitorEvent) + 'static
+    pub fn set_monitor_callback<T>(&mut self, callback: T)
+    where
+        T: FnMut(Monitor, MonitorEvent) + 'static,
     {
         callbacks::monitor::set(callback);
     }
 
     /// Unsets the monitor callback
-    pub fn unset_monitor_callback(
-        &mut self,
-    )
-    {
+    pub fn unset_monitor_callback(&mut self) {
         callbacks::monitor::unset();
     }
 
     /// Sets the joystick callback, overwriting the previous one stored
-    pub fn set_joystick_callback<T>(
-        &mut self,
-        callback: T,
-    )
-    where T: FnMut(JoystickId, JoystickEvent) + 'static
+    pub fn set_joystick_callback<T>(&mut self, callback: T)
+    where
+        T: FnMut(JoystickId, JoystickEvent) + 'static,
     {
         callbacks::joystick::set(callback);
     }
 
     /// Unsets the joystick callback
-    pub fn unset_joystick_callback(
-        &mut self,
-    )
-    {
+    pub fn unset_joystick_callback(&mut self) {
         callbacks::joystick::unset();
     }
 
@@ -1181,8 +1156,8 @@ impl Glfw {
     /// }).expect("Failed to create GLFW window.");
     /// ~~~
     pub fn with_window_monitor<T, F>(&mut self, window: &mut Window, f: F) -> T
-        where
-            F: FnOnce(&mut Self, Option<&mut Monitor>) -> T,
+    where
+        F: FnOnce(&mut Self, Option<&mut Monitor>) -> T,
     {
         match unsafe { ffi::glfwGetWindowMonitor(window.ptr) } {
             ptr if ptr.is_null() => f(self, None),
@@ -1214,9 +1189,7 @@ impl Glfw {
                 .map(|&ptr| Monitor { ptr })
                 .collect::<Vec<Monitor>>();
 
-            let refs: Vec<&mut Monitor> = monitors
-                .iter_mut()
-                .collect();
+            let refs: Vec<&mut Monitor> = monitors.iter_mut().collect();
             f(self, &refs)
         }
     }
@@ -1507,8 +1480,8 @@ impl Glfw {
     ///
     /// Wrapper for `glfwPollEvents`.
     pub fn poll_events_unbuffered<F>(&mut self, mut f: F)
-        where
-            F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
+    where
+        F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
     {
         let _unset_handler_guard = unsafe { crate::callbacks::unbuffered::set_handler(&mut f) };
         self.poll_events();
@@ -1529,8 +1502,8 @@ impl Glfw {
     ///
     /// Wrapper for `glfwWaitEvents`.
     pub fn wait_events_unbuffered<F>(&mut self, mut f: F)
-        where
-            F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
+    where
+        F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
     {
         let _unset_handler_guard = unsafe { crate::callbacks::unbuffered::set_handler(&mut f) };
         self.wait_events();
@@ -1553,8 +1526,8 @@ impl Glfw {
     ///
     /// Wrapper for `glfwWaitEventsTimeout`.
     pub fn wait_events_timeout_unbuffered<F>(&mut self, timeout: f64, mut f: F)
-        where
-            F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
+    where
+        F: FnMut(WindowId, (f64, WindowEvent)) -> Option<(f64, WindowEvent)>,
     {
         let _unset_handler_guard = unsafe { crate::callbacks::unbuffered::set_handler(&mut f) };
         self.wait_events_timeout(timeout);
@@ -1697,12 +1670,12 @@ impl Glfw {
     ) -> bool {
         vk::TRUE
             == unsafe {
-            ffi::glfwGetPhysicalDevicePresentationSupport(
-                instance,
-                device,
-                queue_family as c_uint,
-            ) as u32
-        }
+                ffi::glfwGetPhysicalDevicePresentationSupport(
+                    instance,
+                    device,
+                    queue_family as c_uint,
+                ) as u32
+            }
     }
 
     /// Constructs a `Joystick` handle corresponding to the supplied `JoystickId`.
@@ -1740,7 +1713,9 @@ impl Glfw {
 impl Clone for Glfw {
     fn clone(&self) -> Self {
         REF_COUNT_FOR_GLFW.fetch_add(1, Ordering::SeqCst);
-        Glfw {phantom: std::marker::PhantomData}
+        Glfw {
+            phantom: std::marker::PhantomData,
+        }
     }
 }
 
@@ -1758,12 +1733,18 @@ impl Drop for Glfw {
 fn glfw_channel<T>(initial_capacity: usize, max_len: usize) -> (GlfwSender<T>, GlfwReceiver<T>) {
     let shared = Arc::new(SharedTransmitter {
         queue: Mutex::new(VecDeque::with_capacity(initial_capacity)),
-        max_len
+        max_len,
     });
     let (mpsc_sender, mpsc_receiver) = channel();
 
-    let sender = GlfwSender { transmitter: shared.clone(), sender: mpsc_sender };
-    let receiver = GlfwReceiver { transmitter: shared.clone(), receiver: mpsc_receiver };
+    let sender = GlfwSender {
+        transmitter: shared.clone(),
+        sender: mpsc_sender,
+    };
+    let receiver = GlfwReceiver {
+        transmitter: shared.clone(),
+        receiver: mpsc_receiver,
+    };
     (sender, receiver)
 }
 
@@ -1776,7 +1757,7 @@ struct SharedTransmitter<T> {
 #[derive(Debug, Clone)]
 struct GlfwSender<T> {
     transmitter: Arc<SharedTransmitter<T>>,
-    sender: Sender<T>
+    sender: Sender<T>,
 }
 
 impl<T> GlfwSender<T> {
@@ -1793,7 +1774,7 @@ impl<T> GlfwSender<T> {
 #[derive(Debug)]
 pub struct GlfwReceiver<T> {
     transmitter: Arc<SharedTransmitter<T>>,
-    receiver: Receiver<T>
+    receiver: Receiver<T>,
 }
 
 impl<T> GlfwReceiver<T> {
@@ -1804,7 +1785,7 @@ impl<T> GlfwReceiver<T> {
         } else {
             match self.receiver.try_recv() {
                 Ok(ret) => Some(ret),
-                Err(_) => None
+                Err(_) => None,
             }
         }
     }
@@ -1846,7 +1827,7 @@ struct WindowCallbacks {
     scroll_polling: bool,
     drag_and_drop_polling: bool,
     maximize_polling: bool,
-    content_scale_polling: bool
+    content_scale_polling: bool,
 }
 
 impl WindowCallbacks {
@@ -1887,22 +1868,18 @@ impl WindowCallbacks {
             scroll_polling: false,
             drag_and_drop_polling: false,
             maximize_polling: false,
-            content_scale_polling: false
+            content_scale_polling: false,
         }
     }
 
     fn get_callbacks<'a>(window: *mut GLFWwindow) -> &'a mut WindowCallbacks {
-        unsafe {
-            &mut *(ffi::glfwGetWindowUserPointer(window) as *mut WindowCallbacks)
-        }
+        unsafe { &mut *(ffi::glfwGetWindowUserPointer(window) as *mut WindowCallbacks) }
     }
 }
 
 /// Wrapper for `glfwGetError`.
 pub fn get_error() -> Error {
-    unsafe {
-        mem::transmute(ffi::glfwGetError(null_mut()))
-    }
+    unsafe { mem::transmute(ffi::glfwGetError(null_mut())) }
 }
 
 /// Wrapper for `glfwGetError`.
@@ -1945,8 +1922,8 @@ pub unsafe fn string_from_nullable_c_str(c_str: *const c_char) -> Option<String>
 
 /// Replacement for `ToCStr::with_c_str`
 pub fn with_c_str<F, T>(s: &str, f: F) -> T
-    where
-        F: FnOnce(*const c_char) -> T,
+where
+    F: FnOnce(*const c_char) -> T,
 {
     let c_str = CString::new(s.as_bytes());
     f(c_str.unwrap().as_bytes_with_nul().as_ptr() as *const _)
@@ -2401,7 +2378,9 @@ pub enum WindowEvent {
 ///     // handle event
 /// }
 /// ~~~
-pub fn flush_messages<Message: Send>(receiver: &GlfwReceiver<Message>) -> FlushedMessages<'_, Message> {
+pub fn flush_messages<Message: Send>(
+    receiver: &GlfwReceiver<Message>,
+) -> FlushedMessages<'_, Message> {
     FlushedMessages(receiver)
 }
 
@@ -2683,8 +2662,8 @@ impl Window {
     /// });
     /// ~~~
     pub fn with_window_mode<T, F>(&self, f: F) -> T
-        where
-            F: FnOnce(WindowMode<'_>) -> T,
+    where
+        F: FnOnce(WindowMode<'_>) -> T,
     {
         let ptr = unsafe { ffi::glfwGetWindowMonitor(self.ptr) };
         if ptr.is_null() {
@@ -3421,14 +3400,12 @@ impl DerefMut for PRenderContext {
 unsafe impl Send for PRenderContext {}
 unsafe impl Sync for PRenderContext {}
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasWindowHandle for PRenderContext {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         self.0.window_handle()
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasDisplayHandle for PRenderContext {
     fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> {
         self.0.display_handle()
@@ -3447,7 +3424,6 @@ pub struct RenderContext {
 }
 
 impl RenderContext {
-
     /// Wrapper function, please refer to [`Window::get_proc_address`]
     pub fn get_proc_address(&mut self, procname: &str) -> GLProc {
         if self.ptr != unsafe { ffi::glfwGetCurrentContext() } {
@@ -3556,84 +3532,59 @@ impl Context for RenderContext {
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasWindowHandle for Window {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         Ok(unsafe { WindowHandle::borrow_raw(raw_window_handle(self)) })
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasWindowHandle for RenderContext {
     fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> {
         Ok(unsafe { WindowHandle::borrow_raw(raw_window_handle(self)) })
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasDisplayHandle for Window {
     fn display_handle(&'_ self) -> Result<DisplayHandle<'_>, HandleError> {
         Ok(unsafe { DisplayHandle::borrow_raw(raw_display_handle()) })
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 impl HasDisplayHandle for RenderContext {
     fn display_handle(&'_ self) -> Result<DisplayHandle<'_>, HandleError> {
         Ok(unsafe { DisplayHandle::borrow_raw(raw_display_handle()) })
     }
 }
 
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-unsafe impl HasRawWindowHandle for Window {
-    fn raw_window_handle(&self) -> RawWindowHandle {
-        raw_window_handle(self)
-    }
-}
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-unsafe impl HasRawWindowHandle for RenderContext {
-    fn raw_window_handle(&self) -> RawWindowHandle {
-        raw_window_handle(self)
-    }
-}
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-unsafe impl HasRawDisplayHandle for Window {
-    fn raw_display_handle(&self) -> RawDisplayHandle {
-        raw_display_handle()
-    }
-}
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-unsafe impl HasRawDisplayHandle for RenderContext {
-    fn raw_display_handle(&self) -> RawDisplayHandle {
-        raw_display_handle()
-    }
-}
-
-#[cfg(feature = "raw-window-handle-v0-6")]
 fn raw_window_handle<C: Context>(context: &C) -> RawWindowHandle {
     #[cfg(target_family = "windows")]
     {
         use raw_window_handle::Win32WindowHandle;
         use std::num::NonZeroIsize;
         let (hwnd, hinstance): (*mut std::ffi::c_void, *mut std::ffi::c_void) = unsafe {
-            let hwnd= ffi::glfwGetWin32Window(context.window_ptr());
-            let hinstance: *mut c_void = winapi::um::libloaderapi::GetModuleHandleW(std::ptr::null()) as _;
+            let hwnd = ffi::glfwGetWin32Window(context.window_ptr());
+            let hinstance: *mut c_void =
+                winapi::um::libloaderapi::GetModuleHandleW(std::ptr::null()) as _;
             (hwnd, hinstance as _)
         };
         let mut handle = Win32WindowHandle::new(NonZeroIsize::new(hwnd as isize).unwrap());
         handle.hinstance = NonZeroIsize::new(hinstance as isize);
         RawWindowHandle::Win32(handle)
     }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), not(feature = "wayland")))]
+    #[cfg(all(
+        any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"),
+        not(feature = "wayland")
+    ))]
     {
         use raw_window_handle::XlibWindowHandle;
-        let window = unsafe { ffi::glfwGetX11Window(context.window_ptr()) as std::os::raw::c_ulong };
+        let window =
+            unsafe { ffi::glfwGetX11Window(context.window_ptr()) as std::os::raw::c_ulong };
         RawWindowHandle::Xlib(XlibWindowHandle::new(window))
     }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), feature = "wayland"))]
+    #[cfg(all(
+        any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"),
+        feature = "wayland"
+    ))]
     {
         use raw_window_handle::WaylandWindowHandle;
         use std::ptr::NonNull;
@@ -3666,14 +3617,16 @@ fn raw_window_handle<C: Context>(context: &C) -> RawWindowHandle {
     }
 }
 
-#[cfg(feature = "raw-window-handle-v0-6")]
 fn raw_display_handle() -> RawDisplayHandle {
     #[cfg(target_family = "windows")]
     {
         use raw_window_handle::WindowsDisplayHandle;
         RawDisplayHandle::Windows(WindowsDisplayHandle::new())
     }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), not(feature = "wayland")))]
+    #[cfg(all(
+        any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"),
+        not(feature = "wayland")
+    ))]
     {
         use raw_window_handle::XlibDisplayHandle;
         use std::ptr::NonNull;
@@ -3681,7 +3634,10 @@ fn raw_display_handle() -> RawDisplayHandle {
         let handle = XlibDisplayHandle::new(display, 0);
         RawDisplayHandle::Xlib(handle)
     }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), feature = "wayland"))]
+    #[cfg(all(
+        any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"),
+        feature = "wayland"
+    ))]
     {
         use raw_window_handle::WaylandDisplayHandle;
         use std::ptr::NonNull;
@@ -3699,97 +3655,6 @@ fn raw_display_handle() -> RawDisplayHandle {
         RawDisplayHandle::Web(raw_window_handle::WebDisplayHandle::new())
     }
 }
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-fn raw_window_handle<C: Context>(context: &C) -> RawWindowHandle {
-    #[cfg(target_family = "windows")]
-    {
-        use raw_window_handle::Win32WindowHandle;
-        let (hwnd, hinstance) = unsafe {
-            let hwnd = ffi::glfwGetWin32Window(context.window_ptr());
-            let hinstance = winapi::um::libloaderapi::GetModuleHandleW(std::ptr::null());
-            (hwnd, hinstance as _)
-        };
-        let mut handle = Win32WindowHandle::empty();
-        handle.hwnd = hwnd;
-        handle.hinstance = hinstance;
-        RawWindowHandle::Win32(handle)
-    }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), not(feature = "wayland")))]
-    {
-        use raw_window_handle::XlibWindowHandle;
-        let mut handle = XlibWindowHandle::empty();
-        handle.window = unsafe { ffi::glfwGetX11Window(context.window_ptr()) as std::os::raw::c_ulong };
-        RawWindowHandle::Xlib(handle)
-    }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), feature = "wayland"))]
-    {
-        use raw_window_handle::WaylandWindowHandle;
-        let mut handle = WaylandWindowHandle::empty();
-        handle.surface = unsafe { ffi::glfwGetWaylandWindow(context.window_ptr()) };
-        RawWindowHandle::Wayland(handle)
-    }
-    #[cfg(target_os = "macos")]
-    {
-        use raw_window_handle::AppKitWindowHandle;
-        let (ns_window, ns_view) = unsafe {
-            let ns_window: *mut objc::runtime::Object =
-                ffi::glfwGetCocoaWindow(context.window_ptr()) as *mut _;
-            let ns_view: *mut objc::runtime::Object = objc::msg_send![ns_window, contentView];
-            assert_ne!(ns_view, std::ptr::null_mut());
-            (
-                ns_window as *mut std::ffi::c_void,
-                ns_view as *mut std::ffi::c_void,
-            )
-        };
-        let mut handle = AppKitWindowHandle::empty();
-        handle.ns_window = ns_window;
-        handle.ns_view = ns_view;
-        RawWindowHandle::AppKit(handle)
-    }
-    #[cfg(target_os = "emscripten")]
-    {
-        let _ = context; // to avoid unused lint
-        let mut wh = raw_window_handle::WebWindowHandle::empty();
-        // glfw on emscripten only supports a single window. so, just hardcode it
-        // sdl2 crate does the same. users can just add `data-raw-handle="1"` attribute to their canvas element
-        wh.id = 1;
-        RawWindowHandle::Web(wh)
-    }
-}
-
-#[cfg(not(feature = "raw-window-handle-v0-6"))]
-fn raw_display_handle() -> RawDisplayHandle {
-    #[cfg(target_family = "windows")]
-    {
-        use raw_window_handle::WindowsDisplayHandle;
-        RawDisplayHandle::Windows(WindowsDisplayHandle::empty())
-    }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), not(feature = "wayland")))]
-    {
-        use raw_window_handle::XlibDisplayHandle;
-        let mut handle = XlibDisplayHandle::empty();
-        handle.display = unsafe { ffi::glfwGetX11Display() };
-        RawDisplayHandle::Xlib(handle)
-    }
-    #[cfg(all(any(target_os = "linux", target_os = "freebsd", target_os = "dragonfly"), feature = "wayland"))]
-    {
-        use raw_window_handle::WaylandDisplayHandle;
-        let mut handle = WaylandDisplayHandle::empty();
-        handle.display = unsafe { ffi::glfwGetWaylandDisplay() };
-        RawDisplayHandle::Wayland(handle)
-    }
-    #[cfg(target_os = "macos")]
-    {
-        use raw_window_handle::AppKitDisplayHandle;
-        RawDisplayHandle::AppKit(AppKitDisplayHandle::empty())
-    }
-    #[cfg(target_os = "emscripten")]
-    {
-        RawDisplayHandle::Web(raw_window_handle::WebDisplayHandle::empty())
-    }
-}
-
 
 /// Wrapper for `glfwMakeContextCurrent`.
 pub fn make_context_current(context: Option<&dyn Context>) {
